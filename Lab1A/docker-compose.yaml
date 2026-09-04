@@ -6,3 +6,9 @@ services:
       - 80:80
     volumes:
       - ./src:/usr/local/apache2/htdocs:Z
+    networks:
+      - elysium
+
+networks:
+  elysium:
+    external: true
