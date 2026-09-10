@@ -1,0 +1,43 @@
+#translucent {
+    opacity: 0.5;
+}
+
+img:hover {
+    transform: scale(1.5)
+}
+
+img {
+    transition: transform 3s;
+}
+#colorful {
+    color: royalblue;
+}
+
+#big {
+    font-size: 4em;
+    text-align: center;
+}
+
+#small {
+    font-size: 0.5em;
+}
+
+#backgrounded {
+    background-color: burlywood;
+    position: relative;
+    left: 50px;
+}
+
+#upside {
+    float: left;
+    transform: rotate(180deg);
+}
+
+.filler {
+    font-family: monospace;
+    text-indent: 4em;
+}
+
+h1 {
+    border-style: dashed;
+}
