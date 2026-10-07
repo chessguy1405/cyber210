@@ -2,11 +2,6 @@
 error_reporting(-1);
 session_start();
 
-if(!isset($_SESSION['username'])) {
-    header("Location: /views/login.php");
-    exit;
-}
-
 $mysql_servername = getenv("MYSQL_SERVERNAME");
 $mysql_user = getenv("MYSQL_USER");
 $mysql_password = getenv("MYSQL_PASSWORD");
@@ -14,19 +9,21 @@ $mysql_database = getenv("MYSQL_DATABASE");
 $conn = new mysqli($mysql_servername, $mysql_user, $mysql_password, $mysql_database);
 $logged_in_sql = "SELECT logged_in FROM user WHERE username = ?";
 
-if ($is_logged_in = $conn->prepare($logged_in_sql)) {
-    $is_logged_in->bind_param('s', $_SESSION['username']);
-    $is_logged_in->execute();
-    $logged_in_rows = $is_logged_in->get_result();
-    if ($logged_in_rows->num_rows == 0) {
-        header("Location: /views/login.php");
-        exit;
-    }
-    $row = $logged_in_rows->fetch_assoc();
-    $_SESSION['logged_in'] = $row['logged_in'];
-} else {
-    $_SESSION['logged_in'] = 0;
+// Check connection
+if ($conn->connect_error) {
+	die("Connection failed: " . $conn->connect_error);
 }
+
+$is_logged_in = $conn->prepare($logged_in_sql);
+$is_logged_in->bind_param('s', $_SESSION['username']);
+$is_logged_in->execute();
+$logged_in_rows = $is_logged_in->get_result();
+if ($logged_in_rows->num_rows == 0) {
+	header("Location: /views/login.php");
+	exit;
+}
+$row = $logged_in_rows->fetch_assoc();
+$_SESSION['logged_in'] = $row['logged_in'];
 
 if ($_SESSION['logged_in'] == 1) {
 
@@ -81,5 +78,4 @@ if ($_SESSION['logged_in'] == 1) {
 
 header("Location: /views/login.php");
 exit;
-
 ?>
