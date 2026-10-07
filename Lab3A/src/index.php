@@ -3,7 +3,7 @@ error_reporting(-1);
 session_start();
 
 if(!isset($_SESSION['username'])) {
-    $_SESSION['username'] = ""
+    $_SESSION['username'] = "";
 }
 
 $mysql_servername = getenv("MYSQL_SERVERNAME");
