@@ -1,17 +1,18 @@
-version: "3.7"
 services:
   web:
     container_name: lab-3-apache-php
     build: .
     ports:
-      - 80:80
-      - 443:443
+      - 8778:80
     volumes:
       - ./src:/var/www/html:Z
     depends_on:
       - mariadb
-    env_file: 
+    env_file:
       - .env
+    networks:
+      - elysium
+      - lab3a
 
   mariadb:
     container_name: lab-3-mariadb
@@ -23,11 +24,13 @@ services:
     restart: always
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: "no"
-      MYSQL_ROOT_PASSWORD: toor
+      MYSQL_ROOT_PASSWORD: bMUYkdF8Hz9VLbZ7P55SCs2Htk5nx7bo0xpvp3o9
 
       MYSQL_USER: $MYSQL_USER
       MYSQL_PASSWORD: $MYSQL_PASSWORD
       MYSQL_DATABASE: $MYSQL_DATABASE
+    networks:
+      - lab3a
 
   phpmyadmin:
     container_name: lab-3-phpmyadmin
@@ -39,7 +42,14 @@ services:
       - 8080:80
     environment:
       PMA_HOST: mariadb
-      MYSQL_ROOT_PASSWORD: toor
+      MYSQL_ROOT_PASSWORD: bMUYkdF8Hz9VLbZ7P55SCs2Htk5nx7bo0xpvp3o9
+    networks:
+      - lab3a
 
 volumes:
   mariadb:
+
+networks:
+  elysium:
+    external: true
+  lab3a:
