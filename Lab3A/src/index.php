@@ -2,6 +2,10 @@
 error_reporting(-1);
 session_start();
 
+if(!isset($_SESSION['username'])) {
+    $_SESSION['username'] = ""
+}
+
 $mysql_servername = getenv("MYSQL_SERVERNAME");
 $mysql_user = getenv("MYSQL_USER");
 $mysql_password = getenv("MYSQL_PASSWORD");
