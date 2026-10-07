@@ -74,8 +74,8 @@ if ($_SESSION['logged_in'] == 1) {
         </body>
         </html>
         <p>You can also use normal tags outside of any PHP blocks.</p>');
+} else {
+    header("Location: /views/login.php");
+    exit;
 }
-
-header("Location: /views/login.php");
-exit;
 ?>
