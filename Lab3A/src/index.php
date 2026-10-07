@@ -3,7 +3,8 @@ error_reporting(-1);
 session_start();
 
 if(!isset($_SESSION['username'])) {
-    $_SESSION['username'] = "";
+    header("Location: /views/login.php");
+    exit;
 }
 
 $mysql_servername = getenv("MYSQL_SERVERNAME");
