@@ -4,8 +4,7 @@ services:
     container_name: lab-3-apache-php
     build: .
     ports:
-      - 80:80
-      - 443:443
+      - 8778:80
     volumes:
       - ./src:/var/www/html:Z
     depends_on:
