@@ -10,8 +10,11 @@ services:
       - ./src:/var/www/html:Z
     depends_on:
       - mariadb
-    env_file: 
+    env_file:
       - .env
+    networks:
+      - elysium
+      - lab-3
 
   mariadb:
     container_name: lab-3-mariadb
@@ -28,6 +31,8 @@ services:
       MYSQL_USER: $MYSQL_USER
       MYSQL_PASSWORD: $MYSQL_PASSWORD
       MYSQL_DATABASE: $MYSQL_DATABASE
+    networks:
+      - lab-3
 
   phpmyadmin:
     container_name: lab-3-phpmyadmin
@@ -40,6 +45,13 @@ services:
     environment:
       PMA_HOST: mariadb
       MYSQL_ROOT_PASSWORD: toor
+    networks:
+      - lab-3
 
 volumes:
   mariadb:
+
+networks:
+  elysium:
+    external: true
+  lab-3:
