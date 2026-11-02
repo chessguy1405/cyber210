@@ -1,0 +1,10 @@
+services:
+  tubular:
+    container_name: tubular
+    build: .
+    working_dir: /src
+    command: node server.js
+
+networks:
+  elysium:
+    external: true
