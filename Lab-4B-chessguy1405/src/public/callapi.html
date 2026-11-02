@@ -1,0 +1,493 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>CallApi</title>
+	<style>
+		h2 {
+			color: blue;
+		}
+
+		.tlnk {
+			text-decoration: underline;
+			color: darkgreen;
+			cursor: pointer;
+		}
+
+		.hidden {
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<h2>Request</h2>
+	<p id="links">
+		<strong>Links:</strong>
+	</p>
+	<p id="templates">
+		<strong>Templates:</strong>
+	</p>
+	<p><button onclick="clearAll(event)">Clear</button></p>
+	<form id="form" onsubmit="sendRequest(event)">
+		<table class="layout">
+			<tr>
+				<td><label for="url">URL:</label></td>
+				<td><input id="url" name="url" type="text" style="width: 32em;" /></td>
+			</tr>
+			<tr>
+				<td><label for="verb">Verb:</label></td>
+				<td><select id="verb" name="verb"><option value="GET">GET</option><option value="POST">POST</option><option value="PUT">PUT</option><option value="DELETE">DELETE</option></select></td>
+			</tr>
+			<tr>
+				<td><label for="contenttype">Content-Type:</label></td>
+				<td><select id="contenttype" name="contenttype"><option value="application/json">application/json</option><option value="text/plain">text/plain</option><option value="text/html">text/html</option><option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option><option value="multipart/form-data">multipart/form-data</option></select></td>
+			</tr>
+			<tr>
+				<td><label for="authorization">Authorization:</label></td>
+				<td><input id="authorization" name="authorization" type="text" style="width: 40em;" /></td>
+			</tr>
+			<tr>
+				<td><label for="credinclude">credentials:</label></td>
+				<td><input id="credinclude" name="credinclude" type="checkbox" checked="checked" /><label for="credinclude">include</label></td>
+			</tr>
+			<tr>
+				<td><label for="mode">mode:</label></td>
+				<td><select id="mode" name="mode"><option value="">(default)</option><option value="no-cors">no-cors</option><option value="cors">cors</option><option value="same-origin">same-origin</option><option value="navigate">navigate</option></select></td>
+			</tr>
+		</table>
+		<textarea id="body" name="body" cols="80" rows="10"></textarea><br />
+		<button type="submit">Send</button>
+	</form>
+	<hr />
+	<h2>Response</h2>
+	<div id="resStatus"></div>
+	<div id="resHeaders"></div>
+	<pre id="resBody"></pre>
+	<script>
+		"use strict";
+
+		async function sendRequest(e) {
+			e.preventDefault();
+			const oldCookie = document.cookie;
+			const form = e.currentTarget;
+			const reqUrl = form.url.value;
+			const verb = form.verb.value
+			const req = {
+				headers: {},
+				method: verb
+			};
+			if (verb == "POST" || verb == "PUT") {
+				req.headers["Content-Type"] = form.contenttype.value;
+				req.body = form.body.value;
+			}
+			const authorization = form.authorization.value;
+			if (authorization) {
+				req.headers["Authorization"] = authorization;
+			}
+			if (form.credinclude.checked) {
+				req.credentials = "include";
+			}
+			if (form.mode.value) {
+				req.mode = form.mode.value;
+			}
+
+			document.getElementById("resStatus").innerHTML = "";
+			document.getElementById("resHeaders").innerHTML = "";
+			document.getElementById("resBody").textContent = "";
+
+			try {
+				const response = await fetch(reqUrl, req);
+				document.getElementById("resStatus").textContent = `${response.status} ${response.statusText}`;
+				let newAuthorization;
+				if (newAuthorization = getUpdatedAuthorization(response)) document.getElementById("authorization").value = newAuthorization;
+				reportHeaders(response, oldCookie);
+				reportBody(response);
+			}
+			catch (err) {
+				document.getElementById("resBody").textContent = `Error: ${err.message}\nSee console.`;
+			}
+		}
+
+		function getUpdatedAuthorization(response) {
+			const info = response.headers.get('Authentication-Info');
+			if (!info) return;
+			for (let part of info.split(',')) {
+				part = part.trim();
+				let eq = part.search('=');
+				if (eq < 0) continue;
+				let e = eq;
+				while (e > 0 && (part[e - 1] == ' ' || part[e - 1] == '\t')) --e;
+				if (e != 13 || part.substring(0, 13).toLowerCase() != 'bearer-update') continue;
+				return "Bearer " + part.substring(eq + 1).trim();
+			}
+		}
+
+		function reportHeaders(response, oldCookie) {
+			var ele = document.getElementById("resHeaders");
+			ele.innerHTML = "";
+			for (let pair of response.headers) {
+				var div = document.createElement("div");
+				div.textContent = `${pair[0]}: ${pair[1]}`;
+				ele.appendChild(div);
+			}
+
+			// Report Cookies
+			const oldCookies = parseCookies(oldCookie);
+			const newCookies = parseCookies(document.cookie);
+			for (var key in newCookies) {
+				if (newCookies[key] != oldCookies[key]) {
+					var div = document.createElement("div");
+					div.textContent = `SetCookie:\u00A0${key}=${newCookies[key]}`;
+					ele.appendChild(div);
+				}
+			}
+		}
+
+		async function reportBody(response) {
+			let bodyText = await response.text();
+			var contentType = response.headers.get('content-type');
+			if (contentType && contentType.startsWith('application/json')) {
+				// Attempt to pretty-print
+				try {
+					const obj = JSON.parse(bodyText);
+					bodyText = JSON.stringify(obj, null, 2);
+				}
+				catch {
+					// Do nothing. Just leave bodyText alone
+				}
+			}
+			document.getElementById("resBody").textContent = bodyText;
+		}
+
+		function parseCookies(cookieString) {
+			let cookies = {};
+			for (var cookie of cookieString.split(';')) {
+				let eq = cookie.indexOf('=');
+				cookies[cookie.substring(0, eq).trim()] = cookie.substring(eq + 1).trim();;
+			}
+			return cookies;
+		}
+
+		function deleteAllCookies() {
+			for (const key in parseCookies(document.cookie)) {
+				// Clear with and without path
+				document.cookie = key + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+				document.cookie = key + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+			}
+		}
+
+		function clearAll(e) {
+			e.preventDefault();
+
+			// Clear Request
+			document.getElementById("verb").value = "GET";
+			updateUrl("/");
+			document.getElementById("token").value = "";
+			document.getElementById("credinclude").checked = false;
+			document.getElementById("body").value = "";
+			deleteAllCookies();
+
+			// Clear Response
+			document.getElementById("resStatus").innerHTML = "";
+			document.getElementById("resHeaders").innerHTML = "";
+			document.getElementById("resBody").textContent = "";
+		}
+
+
+		let templateIndex = 0;
+
+		function onTemplateClick(e) {
+			e.preventDefault();
+			let data = e.target.data;
+			if (data.alt) {
+				data = data.alt[templateIndex % data.alt.length];
+				templateIndex++;
+			}
+			document.getElementById("verb").value = data.verb;
+			updateUrl(data.url);
+			if (data.contenttype) {
+				document.getElementById("contenttype").value = data.contenttype;
+			}
+			if (data.body) {
+				document.getElementById("body").value = JSON.stringify(data.body, null, 2);
+			}
+			else {
+				document.getElementById("body").value = "";
+			}
+		}
+
+		function updateUrl(newurl) {
+			const urlele = document.getElementById("url");
+			const existing = urlele.value;
+			if (existing.startsWith('http')) {
+				urlele.value = new URL(newurl, existing);
+			}
+			else {
+				urlele.value = newurl;
+			}
+		}
+
+		function setLinks() {
+			const p = document.getElementById("links");
+			if (links && links.length > 0) {
+				for (let l of links) {
+					p.appendChild(document.createTextNode(" "));
+					let a = document.createElement("a");
+					a.setAttribute('href', l.href);
+					a.textContent = l.name;
+					p.append(a);
+				}
+			}
+			else {
+				p.classList.add("hidden");
+			}
+		}
+
+		function setTemplates() {
+			const p = document.getElementById("templates");
+			for (let t of templates) {
+				p.appendChild(document.createTextNode(" "));
+				let a = document.createElement("a");
+				a.data = t;
+				a.classList.add("tlnk");
+				a.addEventListener("click", onTemplateClick);
+				a.textContent = t.name;
+				p.append(a);
+			}
+		}
+
+
+		// Initialization
+		function initCallapi() {
+			// Default URL
+			document.getElementById("url").value = defaultUrl;
+			setLinks();
+			setTemplates();
+		}
+
+		window.addEventListener("load", initCallapi);
+	</script>
+
+<script>
+// These are the templates that are used to customize callapi for specific applications. 
+
+const defaultUrl = window.location.origin;
+
+const links = [
+	{
+		name: "Login",
+		href: "/api/v1/auth/google?returnTo=/callapi"
+	}
+];
+
+function TodayPlus(days) {
+	var date = new Date(); // Current date and time
+	date = new Date(date.valueOf() - date.getTimezoneOffset() * 60000 + days * 86400000);
+	return date.toISOString().slice(0,10);
+}
+
+const templates = [
+	{
+		name: "Status",
+		verb: "GET",
+		url: "/api/v1/status",
+		contenttype: "application/json"
+	},
+	{
+		name: "User",
+		verb: "GET",
+		url: "/api/v1/user",
+		contenttype: "application/json"
+	},
+	{
+		name: "Create",
+		alt: [
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Get ice cream at the creamery", date: TodayPlus(2) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "View a planetarium show", date: TodayPlus(4) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Watch a movie at the International Cinema", date: TodayPlus(5) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Visit the Museum of Art", date: TodayPlus(1) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Explore the Education in Zion Gallery in the Joseph F. Smith building", date: TodayPlus(5) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Wander the southwest campus paths", date: TodayPlus(2) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Get lunch at the Pendulum Court Cafe", date: TodayPlus(4) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Hike Y mountain", date: TodayPlus(12) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Go bowling at the Wilk", date: TodayPlus(10) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "View the campus and temple models in the Hinckley Center", date: TodayPlus(7) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Check out the science exhibits in the Eyring Science Center", date: TodayPlus(4) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Go putting on the green near the tennis courts", date: TodayPlus(22) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Check out the special collections at the library", date: TodayPlus(5) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Visit the animal exhibits at the Monte L. Bean museum", date: TodayPlus(19) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Buy a used computer at the surplus sale", date: TodayPlus(28) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Take a friend to the Paleontology Museum", date: TodayPlus(17) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Check out the view from the Life Sciences Building outdoor deck", date: TodayPlus(14) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Go stargazing with the telescopes on the Eyring Science Center deck (after the planetarium show)", date: TodayPlus(21) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Catch a classic film at the BYU Motion Picture Archive screenings", date: TodayPlus(21) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Study the exhibits at the Museum of Peoples and Cultures", date: TodayPlus(13) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Rent a slackline at Outdoors Unlimited", date: TodayPlus(8) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Visit the ducks at the south campus botany pond", date: TodayPlus(1) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Scan family photos and digitize slides at the Family History Library", date: TodayPlus(9) }
+			},
+			{
+				verb: "POST",
+				url: "/api/v1/tasks",
+				contenttype: "application/json",
+				body: { text: "Watch a movie at the Varsity Theater", date: TodayPlus(6) }
+			}
+		]
+	},
+	{
+		name: "ReadAll",
+		verb: "GET",
+		url: "/api/v1/tasks",
+		contenttype: "application/json"
+	},
+	{
+		name: "ReadOne",
+		verb: "GET",
+		url: "/api/v1/tasks/0",
+		contenttype: "application/json"
+	},
+	{
+		name: "Update",
+		verb: "PUT",
+		url: "/api/v1/tasks/0",
+		contenttype: "application/json",
+		body: { done: true }
+	},
+	{
+		name: "Delete",
+		verb: "DELETE",
+		url: "/api/v1/tasks/0",
+		contenttype: "application/json"
+	},
+	{
+		name: "DeleteAll",
+		verb: "DELETE",
+		url: "/api/v1/tasks/all",
+		contenttype: "application/json"
+	},
+    {
+        name: "Logout",
+        verb: "POST",
+        url: "/api/v1/auth/logout",
+		contenttype: "application/json",
+		body: { logout: true }
+	}
+
+];
+</script>
+
+</body>
+</html>
