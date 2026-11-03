@@ -4,6 +4,8 @@ services:
     build: .
     working_dir: /src
     command: node server.js
+    networks:
+      - elysium
 
 networks:
   elysium:
