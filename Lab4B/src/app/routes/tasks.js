@@ -125,17 +125,27 @@ router.delete(`/:id`, async (req, res) => {
 			res.status(401).send("Unauthorized. Please log in.");
 		}
 		else {
-			const task = await Task.find( {userId: req.user.id, _id: req.params.id} );
-			if (!task) {
-				res.status(404).send(`Task with ID ${req.params.id} does not exist.`)
-			}
-			else {
+			if (req.params.id == "all") {
 				Task.bulkWrite([{
-					deleteOne: {
-						filter: { userId: req.user.id, _id: req.params.id }
+					deleteMany: {
+						filter: { userId: req.user.id }
 					}
 				}]);
 				res.sendStatus(200);
+			}
+			else {
+				const task = await Task.find( {userId: req.user.id, _id: req.params.id} );
+				if (!task) {
+					res.status(404).send(`Task with ID ${req.params.id} does not exist.`)
+				}
+				else {
+					Task.bulkWrite([{
+						deleteOne: {
+							filter: { userId: req.user.id, _id: req.params.id }
+						}
+					}]);
+					res.sendStatus(200);
+				}
 			}
 		}
 	}
