@@ -28,9 +28,6 @@ passport.use(new googleStrategy({
         // Uncomment this to view the raw response from Google on the console
         //console.log(profile); 
 
-        //TODO: The user record should have the following properties: id, userName, and email
-        // Retrieve the appropriate values from the 'profile' variable and set them here in place of
-        // these constant values.
         const user = {id: profile.id, userName: profile.name.givenName + profile.name.familyName, email: profile._json.email };
 
         // Return the value in the callback

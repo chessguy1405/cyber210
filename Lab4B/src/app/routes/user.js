@@ -3,11 +3,12 @@
  * examples from other such as 'auth.js' to help you implement it.
  */
 
-// TODO: Implement the user module
 const express = require('express');
 const router = express.Router();
 
-
+/*
+* User: returns the id, username, and email of the currently logged in user
+*/
 router.get(`/`, async (req, res) => {
     try {
         if (!req.user) {

@@ -34,8 +34,6 @@ router.get(`/:id`, async (req, res) => {
 /**
  * Create: Post one task with a body containing the text and date
  */
-// TODO: Implement Create Task
-// The Mongoose Model reference will be helpful: https://mongoosejs.com/docs/models.html
 router.post(`/`, async (req, res) => {
 	try {
 		if (!req.user) {
@@ -67,7 +65,6 @@ router.post(`/`, async (req, res) => {
 /**
  * ReadAll: Get all tasks
  */
-// TODO: Implement Read All Tasks
 router.get(`/`, async (req, res) => {
 	try {
 		if (req.user) {
@@ -87,7 +84,6 @@ router.get(`/`, async (req, res) => {
 /**
  * Update: Put one task with the task's id specified in the path
  */
-// TODO: Implement Update Task
 router.put(`/:id`, async (req, res) => {
 	try {
 		if (!req.user) {
@@ -117,8 +113,8 @@ router.put(`/:id`, async (req, res) => {
 
 /**
  * Delete: Delete one task with the task's id specified in the path
+ * DeleteAll: Enter "all" as the ID to delete all tasks for the user
  */
-// TODO: Implement Delete Task
 router.delete(`/:id`, async (req, res) => {
 	try {
 		if (!req.user) {

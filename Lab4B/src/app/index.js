@@ -28,7 +28,6 @@ router.use('/api/v1/auth', require('./routes/auth'));
 router.use('/api/v1/status', require('./routes/status'));
 router.use('/api/v1/tasks', authenticate, require('./routes/tasks'));
 router.use('/api/v1/user', authenticate, require('./routes/user'));
-// TODO: Add additional routes here
 
 // This serves all '.html' and '.htm' files in your public directory
 router.use(express.static('public', {
