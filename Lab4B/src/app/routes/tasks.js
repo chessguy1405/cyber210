@@ -94,7 +94,7 @@ router.put(`/:id`, async (req, res) => {
 			if (!foundTask) {
 				res.status(404).send(`Task with ID ${req.params.id} does not exist.`);
 			} else {
-				if (!req.body.done) {
+				if (req.body.done == false) {
 					res.status(400).send("Bad request");
 				}
 				else {
